@@ -34,8 +34,10 @@ Quick start
         EVENT_TYPE_2 = 'SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_2'
         ...
 
+    SNS_EVENT_ENUM = SNSEvent
+
     SQS_EVENTS = {
-        SNSEvent.EVENT_TYPE_1.value: {
+        SNS_EVENT_ENUM.EVENT_TYPE_1.value: {
             'sqs_queue_url': 'YOUR_QUEUE_URL_FOR_EVENT_1',
             'event_processor': 'PATH_OF_THE_CLASS_PROCESSOR_FOR_EVENT_1'
         }
@@ -90,7 +92,7 @@ Dispatch your data using ``EventDispatcher`` like this::
 
     event_dispatcher = EventDispatcher()
         event_dispatcher.dispatch(
-            event_name=settings.SNSEvent.IMAGE_CREATED.value,
+            event_name=settings.SNS_EVENT_ENUM.IMAGE_CREATED.value,
             event_data=your_data,
             event_data_type='json'
         )
