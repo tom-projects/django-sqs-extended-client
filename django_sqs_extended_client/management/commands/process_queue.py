@@ -6,7 +6,6 @@ import pydoc
 import json
 
 
-# noinspection PyCallingNonCallable
 class Command(BaseCommand):
     help = 'Process Queue'
 
@@ -19,8 +18,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         queue_code = options['queue_code']
 
-        signal_handler = SignalHandler()
-
         try:
             sns_event = getattr(settings.SNS_EVENT_ENUM, queue_code)
         except AttributeError:
@@ -31,7 +28,9 @@ class Command(BaseCommand):
         except KeyError:
             raise NotImplementedError(f'sqs_queue_url not implemented for settings.SQS_EVENTS[{sns_event.name}.value]')
 
-        while not signal_handler.received_signal:
+        signal_handler = SignalHandler()
+
+        while not self.get_received_signal(signal_handler=signal_handler):
             sns = SNSClientExtended(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY,
                                     settings.AWS_DEFAULT_REGION,
                                     settings.AWS_S3_QUEUE_STORAGE_NAME)
@@ -40,6 +39,10 @@ class Command(BaseCommand):
                 for message in messages:
                     self.process_event(message)
                     sns.delete_message(queue_url, message.get('ReceiptHandle'))
+
+    @staticmethod
+    def get_received_signal(signal_handler):
+        return signal_handler.received_signal
 
     @staticmethod
     def process_event(event_message):
