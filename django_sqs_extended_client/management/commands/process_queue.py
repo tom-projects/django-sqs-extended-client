@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.core.management.base import BaseCommand
-
 from django_sqs_extended_client.aws.sns_client_extended import SNSClientExtended
 from django_sqs_extended_client.queue.common import SignalHandler
-from django_sqs_extended_client.process_event import process_event
+import pydoc
+import json
 
 
+# noinspection PyCallingNonCallable
 class Command(BaseCommand):
     help = 'Process Queue'
 
@@ -21,7 +22,7 @@ class Command(BaseCommand):
         signal_handler = SignalHandler()
 
         try:
-            sns_event = getattr(settings.SNSEvent, 'queue_code')
+            sns_event = getattr(settings.SNS_EVENT_ENUM, queue_code)
         except AttributeError:
             raise NotImplementedError(f'{queue_code} not implemented in settings.SNSEvent')
 
@@ -31,10 +32,38 @@ class Command(BaseCommand):
             raise NotImplementedError(f'sqs_queue_url not implemented for settings.SQS_EVENTS[{sns_event.name}.value]')
 
         while not signal_handler.received_signal:
-            sns = SNSClientExtended(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY, settings.AWS_DEFAULT_REGION,
+            sns = SNSClientExtended(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY,
+                                    settings.AWS_DEFAULT_REGION,
                                     settings.AWS_S3_QUEUE_STORAGE_NAME)
             messages = sns.receive_message(queue_url, 1, 10)
             if messages is not None and len(messages) > 0:
                 for message in messages:
-                    process_event(message)
+                    self.process_event(message)
                     sns.delete_message(queue_url, message.get('ReceiptHandle'))
+
+    @staticmethod
+    def process_event(event_message):
+
+        body = event_message.get('Body')
+        content = body.get('Message')
+        attributes = body.get('MessageAttributes')
+
+        if 'content_type' in attributes:
+            content_type = attributes.get('content_type')
+            if content_type == 'json':
+                data = json.loads(content)
+            else:
+                data = content
+        else:
+            data = content
+
+        event_type = attributes.get('event_type')['Value']
+
+        try:
+            event_processor_class_path = settings.SQS_EVENTS[event_type]['event_processor']
+        except KeyError as e:
+            raise NotImplementedError(f'event_processor not implemented for settings.SQS_EVENTS[{event_type}]')
+        event_processor_class = pydoc.locate(event_processor_class_path)
+        if event_processor_class is None:
+            raise FileNotFoundError(f'File "{event_processor_class_path}" not found')
+        event_processor_class(data=data).execute()

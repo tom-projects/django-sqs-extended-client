@@ -60,13 +60,16 @@ E.g:
             AWS_S3_QUEUE_STORAGE_NAME = 'sns-queues'
             AWS_SNS_TOPIC = 'arn:aws:sns:us-east-1:123456789:domainEvents'
 
+
             # AWS EVENTS:
             class SNSEvent(Enum):
                 IMAGE_CREATED = 'service1.event.image.created'
 
 
+            SNS_EVENT_ENUM = SNSEvent
+
             SQS_EVENTS = {
-                SNSEvent.IMAGE_CREATED.value: {
+                SNS_EVENT_ENUM.IMAGE_CREATED.value: {
                     'sqs_queue_url': 'https://sqs.us-east-1.amazonaws.com/123456789/image-created',
                     'event_processor': 'your_project.event_processors.image_created.ImageCreated'
                 }
@@ -100,7 +103,7 @@ For each settings.SQS_EVENTS, add a class which extends ``django_sqs_extended_cl
 This Class accepts the data in the constructor and must have the method ``execute()`` where you can add the code to manage your data.
 Use the same paths of the 'event_processor' in settings.SQS_EVENTS like this::
 
-    from django_sqs_extended_client.event_processor import EventProcessor
+    from django_sqs_extended_client.event_processor.event_processor import EventProcessor
 
     class ImageCreated(EventProcessor):
 

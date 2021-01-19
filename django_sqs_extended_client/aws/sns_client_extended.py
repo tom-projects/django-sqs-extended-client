@@ -158,7 +158,7 @@ class SNSClientExtended(object):
                 except ValueError:
                     raise ValueError('Decoding JSON has failed')
             else:
-                message['Body'] = json.loads(message.get('Body'))
+                message['Body'] = json.loads(message.get('Body')) if isinstance(message.get('Body'), str) else message.get('Body')
 
         return opt_messages
 
