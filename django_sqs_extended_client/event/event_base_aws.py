@@ -12,7 +12,7 @@ class EventBaseAws(EventBase):
     AWS_S3_QUEUE_STORAGE_NAME = settings.AWS_S3_QUEUE_STORAGE_NAME
     AWS_SNS_TOPIC = settings.AWS_SNS_TOPIC
 
-    def dispatch(self, event_name, event_data, event_data_type):
+    def dispatch(self, event_name, event_data):
         sns = SNSClientExtended(self.AWS_ACCESS_KEY_ID,
                                 self.AWS_SECRET_ACCESS_KEY,
                                 self.AWS_DEFAULT_REGION,
@@ -24,10 +24,6 @@ class EventBaseAws(EventBase):
                 'event_type': {
                     'DataType': 'String',
                     'StringValue': event_name
-                },
-                'content_type': {
-                    'DataType': 'String',
-                    'StringValue': event_data_type
                 }
             }
         )

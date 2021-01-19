@@ -19,7 +19,15 @@ Quick start
         'django_sqs_extended_client',
     ]
 
-2. Include some additional settings like this::
+2. On AWS SQS create your Queue and subscribe it to a SNS Topic. After that edit the subscription adding the code below in "Subscription filter policy"::
+
+    {
+      "event_type": [
+        "YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_1"
+      ]
+    }
+
+3. Include some additional django settings like this::
 
     # AWS SNS KEYS
     AWS_ACCESS_KEY_ID = 'YOUR_AWS_ACCESS_KEY_ID'
@@ -30,8 +38,8 @@ Quick start
 
     # AWS EVENTS:
     class SNSEvent(Enum):
-        EVENT_TYPE_1 = 'SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_1'
-        EVENT_TYPE_2 = 'SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_2'
+        EVENT_TYPE_1 = 'YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_1'
+        EVENT_TYPE_2 = 'YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_2'
         ...
 
     SNS_EVENT_ENUM = SNSEvent
@@ -44,7 +52,7 @@ Quick start
     }
 
 
-3. Add one cron for each event to process with SQS to run every minute with a lock::
+4. Add one cron for each event to process with SQS to run every minute with a lock::
 
     * * * * * python manage.py process_queue EVENT_CODE_1
     * * * * * python manage.py process_queue EVENT_CODE_2
@@ -94,10 +102,9 @@ Dispatch your data using ``EventDispatcher`` like this::
         event_dispatcher.dispatch(
             event_name=settings.SNS_EVENT_ENUM.IMAGE_CREATED.value,
             event_data=your_data,
-            event_data_type='json'
         )
 
-You can send also data as 'csv', 'xls', 'xml' and manage it in your event_processor on another service.
+event_data accept list, dict and row content data as xml, csv, json.
 
 In the receiver service:
 

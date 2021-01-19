@@ -51,13 +51,9 @@ class Command(BaseCommand):
         content = body.get('Message')
         attributes = body.get('MessageAttributes')
 
-        if 'content_type' in attributes:
-            content_type = attributes.get('content_type')
-            if content_type == 'json':
-                data = json.loads(content)
-            else:
-                data = content
-        else:
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError:
             data = content
 
         event_type = attributes.get('event_type')['Value']

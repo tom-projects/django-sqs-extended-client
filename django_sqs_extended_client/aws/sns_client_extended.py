@@ -212,13 +212,16 @@ class SNSClientExtended(object):
         print("receipt_handle={}".format(receipt_handle))
         self.sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
-    def send_message(self, topic, message, message_attributes={}):
+    def send_message(self, topic, message, message_attributes: dict):
         """
         Delivers a message to the specified queue and uploads the message payload
         to Amazon S3 if necessary.
         """
         if message is None:
             raise ValueError('message_body required')
+
+        if isinstance(message, (dict, list)):
+            message = json.dumps(message)
 
         msg_attributes_size = self.__get_msg_attributes_size(message_attributes)
         if msg_attributes_size > self.message_size_threshold:
