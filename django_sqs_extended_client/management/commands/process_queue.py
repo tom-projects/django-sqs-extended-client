@@ -41,7 +41,7 @@ class Command(BaseCommand):
                     sns.delete_message(queue_url, message.get('ReceiptHandle'))
 
     @staticmethod
-    def get_received_signal(signal_handler):
+    def get_received_signal(signal_handler: SignalHandler):
         return signal_handler.received_signal
 
     @staticmethod
