@@ -37,7 +37,10 @@ class Command(BaseCommand):
             messages = sns.receive_message(queue_url, 1, 10)
             if messages is not None and len(messages) > 0:
                 for message in messages:
-                    self.process_event(message)
+                    body = message.get('Body')
+                    content = body.get('Message')
+                    attributes = body.get('MessageAttributes')
+                    self.process_event(content_data=content, attributes=attributes)
                     sns.delete_message(queue_url, message.get('ReceiptHandle'))
 
     @staticmethod
@@ -45,16 +48,11 @@ class Command(BaseCommand):
         return signal_handler.received_signal
 
     @staticmethod
-    def process_event(event_message):
-
-        body = event_message.get('Body')
-        content = body.get('Message')
-        attributes = body.get('MessageAttributes')
-
+    def process_event(content_data, attributes):
         try:
-            data = json.loads(content)
-        except json.JSONDecodeError:
-            data = content
+            data = json.loads(content_data)
+        except (json.JSONDecodeError, TypeError):
+            data = content_data
 
         event_type = attributes.get('event_type')['Value']
 
