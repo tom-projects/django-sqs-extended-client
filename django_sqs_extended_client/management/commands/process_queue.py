@@ -19,14 +19,14 @@ class Command(BaseCommand):
         queue_code = options['queue_code']
 
         try:
-            sns_event = getattr(settings.SNS_EVENT_ENUM, queue_code)
-        except AttributeError:
-            raise NotImplementedError(f'{queue_code} not implemented in settings.SNSEvent')
+            sqs_event = settings.SQS_EVENTS[queue_code]
+        except KeyError:
+            raise NotImplementedError(f'{queue_code} not implemented in settings.SQS_EVENTS')
 
         try:
-            queue_url = settings.SQS_EVENTS[sns_event.value]['sqs_queue_url']
+            queue_url = sqs_event['sqs_queue_url']
         except KeyError:
-            raise NotImplementedError(f'sqs_queue_url not implemented for settings.SQS_EVENTS[{sns_event.name}.value]')
+            raise NotImplementedError(f"sqs_queue_url not implemented for settings.SQS_EVENTS[{queue_code}]")
 
         signal_handler = SignalHandler()
 
@@ -57,7 +57,7 @@ class Command(BaseCommand):
         event_type = attributes.get('event_type')['Value']
 
         try:
-            event_processor_class_path = settings.SQS_EVENTS[event_type]['event_processor']
+            event_processor_class_path = settings.SQS_EVENTS[queue_code]['event_processor']
         except KeyError as e:
             raise NotImplementedError(f'event_processor not implemented for settings.SQS_EVENTS[{event_type}]')
         event_processor_class = pydoc.locate(event_processor_class_path)

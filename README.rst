@@ -19,7 +19,7 @@ Quick start
         'django_sqs_extended_client',
     ]
 
-2. On AWS SQS create your Queue and subscribe it to a SNS Topic. After that edit the subscription adding the code below in "Subscription filter policy"::
+2. On AWS SQS create your Queue and subscribe it to a SNS Topic. After that edit the subscription in "Subscription filter policy" like this::
 
     {
       "event_type": [
@@ -37,25 +37,31 @@ Quick start
     AWS_SNS_TOPIC = 'YOUR_AWS_SNS_TOPIC'
 
     # AWS EVENTS:
-    class SNSEvent(Enum):
-        EVENT_TYPE_1 = 'YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_1'
-        EVENT_TYPE_2 = 'YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_2'
+    SNS_EVENTS = {
+        'EVENT_TYPE_1': 'YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_1',
+        'EVENT_TYPE_2': 'YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_2',
         ...
-
-    SNS_EVENT_ENUM = SNSEvent
+    }
 
     SQS_EVENTS = {
-        SNS_EVENT_ENUM.EVENT_TYPE_1.value: {
-            'sqs_queue_url': 'YOUR_QUEUE_URL_FOR_EVENT_1',
-            'event_processor': 'PATH_OF_THE_CLASS_PROCESSOR_FOR_EVENT_1'
-        }
+        'EVENT_TYPE_3': {
+            'sns_event_filter': 'YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_3',
+            'sqs_queue_url': 'YOUR_QUEUE_URL_FOR_EVENT_3',
+            'event_processor': 'PATH_OF_THE_CLASS_PROCESSOR_FOR_EVENT_3'
+        },
+        'EVENT_TYPE_4': {
+            'sns_event_filter': 'YOUR_SNS_SUBSCRIPTION_FILTER_EVENT_TYPE_4',
+            'sqs_queue_url': 'YOUR_QUEUE_URL_FOR_EVENT_4',
+            'event_processor': 'PATH_OF_THE_CLASS_PROCESSOR_FOR_EVENT_4'
+        },
+        ...
     }
 
 
-4. Add one cron for each event to process with SQS to run every minute with a lock::
+4. Add one cron for each SQS event to process. Run it every minute with a lock::
 
-    * * * * * python manage.py process_queue EVENT_CODE_1
-    * * * * * python manage.py process_queue EVENT_CODE_2
+    * * * * * python manage.py process_queue EVENT_TYPE_3
+    * * * * * python manage.py process_queue EVENT_TYPE_4
 
 You can use a library as https://pypi.org/project/django-chroniker/ for an easier way to manage crons and lockers
 
@@ -72,22 +78,22 @@ E.g:
 
 
             # AWS EVENTS:
-            class SNSEvent(Enum):
-                IMAGE_CREATED = 'service1.event.image.created'
 
-
-            SNS_EVENT_ENUM = SNSEvent
+            SNS_EVENTS = {
+                'PAYMENT_REGISTERED': 'this-service.event.payment.registered'
+            }
 
             SQS_EVENTS = {
-                SNS_EVENT_ENUM.IMAGE_CREATED.value: {
-                    'sqs_queue_url': 'https://sqs.us-east-1.amazonaws.com/123456789/image-created',
-                    'event_processor': 'your_project.event_processors.image_created.ImageCreated'
-                }
+                'BOOKING_SERVICE__ROOM_BOOKED': {
+                    'sns_event_filter': 'booking-service.event.room.booked',
+                    'sqs_queue_url': 'https://sqs.us-east-1.amazonaws.com/123456789/booking-service--room-booked',
+                    'event_processor': 'your_project.event_processors.room_booked.RoomBooked'
+                },
             }
 
         Cron::
 
-        * * * * * python manage.py process_queue IMAGE_CREATED
+        * * * * * python manage.py process_queue BOOKING_SERVICE__ROOM_BOOKED
 
 
 Usage
@@ -100,7 +106,7 @@ Dispatch your data using ``EventDispatcher`` like this::
 
     event_dispatcher = EventDispatcher()
         event_dispatcher.dispatch(
-            event_name=settings.SNS_EVENT_ENUM.IMAGE_CREATED.value,
+            event_name=settings.SNS_EVENTS['PAYMENT_REGISTERED'],
             event_data=your_data,
         )
 
