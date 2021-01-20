@@ -40,7 +40,7 @@ class Command(BaseCommand):
                     body = message.get('Body')
                     content = body.get('Message')
                     attributes = body.get('MessageAttributes')
-                    self.process_event(content_data=content, attributes=attributes)
+                    self.process_event(queue_code=queue_code, content_data=content, attributes=attributes)
                     sns.delete_message(queue_url, message.get('ReceiptHandle'))
 
     @staticmethod
@@ -48,7 +48,7 @@ class Command(BaseCommand):
         return signal_handler.received_signal
 
     @staticmethod
-    def process_event(content_data, attributes):
+    def process_event(queue_code, content_data, attributes):
         try:
             data = json.loads(content_data)
         except (json.JSONDecodeError, TypeError):
