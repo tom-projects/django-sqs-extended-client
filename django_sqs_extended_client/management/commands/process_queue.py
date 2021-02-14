@@ -1,3 +1,5 @@
+from time import sleep
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django_sqs_extended_client.aws.sns_client_extended import SNSClientExtended
@@ -15,8 +17,23 @@ class Command(BaseCommand):
             type=str,
         )
 
+        parser.add_argument(
+            'sleep_poll_seconds',
+            type=float,
+            default=0.2
+        )
+
+        parser.add_argument(
+            'exit_after_max_iterations_count',
+            type=int,
+            default=200
+        )
+
     def handle(self, *args, **options):
         queue_code = options['queue_code']
+        sleep_poll_seconds = options['sleep_poll_seconds']
+        exit_after_max_iterations_count = options['exit_after_max_iterations_count']
+        iterations = 0
 
         try:
             sqs_event = settings.SQS_EVENTS[queue_code]
@@ -31,6 +48,12 @@ class Command(BaseCommand):
         signal_handler = SignalHandler()
 
         while not self.get_received_signal(signal_handler=signal_handler):
+
+            if iterations > exit_after_max_iterations_count:
+                print(f'Exiting after {exit_after_max_iterations_count} iterations.')
+                exit(1)
+
+            sleep(sleep_poll_seconds)
             sns = SNSClientExtended(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY,
                                     settings.AWS_DEFAULT_REGION,
                                     settings.AWS_S3_QUEUE_STORAGE_NAME)
