@@ -48,7 +48,7 @@ class Command(BaseCommand):
         signal_handler = SignalHandler()
 
         while not self.get_received_signal(signal_handler=signal_handler):
-
+            iterations = iterations + 1
             if iterations > exit_after_max_iterations_count:
                 print(f'Exiting after {exit_after_max_iterations_count} iterations.')
                 exit(1)
