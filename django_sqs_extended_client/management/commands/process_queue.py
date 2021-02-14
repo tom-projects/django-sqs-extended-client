@@ -18,13 +18,15 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
-            'sleep_poll_seconds',
+            '-s',
+            '--sleep_poll_seconds',
             type=float,
             default=0.2
         )
 
         parser.add_argument(
-            'exit_after_max_iterations_count',
+            '-e'
+            '--exit_after_max_iterations_count',
             type=int,
             default=200
         )
