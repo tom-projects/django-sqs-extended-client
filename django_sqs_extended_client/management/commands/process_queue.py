@@ -25,7 +25,7 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
-            '-e'
+            '-e',
             '--exit_after_max_iterations_count',
             type=int,
             default=200
@@ -53,9 +53,8 @@ class Command(BaseCommand):
             iterations = iterations + 1
             if iterations > exit_after_max_iterations_count:
                 print(f'Exiting after {exit_after_max_iterations_count} iterations.')
-                exit(1)
+                return
 
-            sleep(sleep_poll_seconds)
             sns = SNSClientExtended(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY,
                                     settings.AWS_DEFAULT_REGION,
                                     settings.AWS_S3_QUEUE_STORAGE_NAME)
@@ -67,6 +66,7 @@ class Command(BaseCommand):
                     attributes = body.get('MessageAttributes')
                     self.process_event(queue_code=queue_code, content_data=content, attributes=attributes)
                     sns.delete_message(queue_url, message.get('ReceiptHandle'))
+            sleep(sleep_poll_seconds)
 
     @staticmethod
     def get_received_signal(signal_handler: SignalHandler):
