@@ -32,6 +32,12 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
+            '-f',
+            '--flush_s3',
+            action='store_true',
+        )
+
+        parser.add_argument(
             '-m',
             '--max_number_of_messages',
             type=int,
@@ -44,6 +50,7 @@ class Command(BaseCommand):
         sleep_poll_seconds = options['sleep_poll_seconds']
         max_number_of_messages = options['max_number_of_messages']
         exit_after_max_iterations_count = options['exit_after_max_iterations_count']
+        flush_s3 = options.get('flush_s3', False)
         iterations = 0
 
         try:
@@ -76,7 +83,8 @@ class Command(BaseCommand):
                     content = body.get('Message')
                     attributes = body.get('MessageAttributes')
                     self.process_event(queue_code=queue_code, content_data=content, attributes=attributes)
-                    sns.delete_message(queue_url, message.get('ReceiptHandle'))
+                    sns.delete_message(queue_url=queue_url, receipt_handle=message.get('ReceiptHandle'),
+                                       flush_s3=flush_s3)
             sleep(sleep_poll_seconds)
 
     @staticmethod

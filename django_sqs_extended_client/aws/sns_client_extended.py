@@ -195,7 +195,7 @@ class SNSClientExtended(object):
     def __is_s3_receipt_handle(receipt_handle):
         return True if SQSExtendedClientConstants.S3_BUCKET_NAME_MARKER.value in receipt_handle and SQSExtendedClientConstants.S3_KEY_MARKER.value in receipt_handle else False
 
-    def delete_message(self, queue_url, receipt_handle):
+    def delete_message(self, queue_url, receipt_handle, flush_s3):
         """
         Deletes the specified message from the specified queue. You specify the message
         by using the message's receipt handle and not the MessageId you receive when you
@@ -206,7 +206,7 @@ class SNSClientExtended(object):
 
         Additionally to purging the queue of the message any s3 referenced object will be deleted
         """
-        if self.__is_s3_receipt_handle(receipt_handle):
+        if self.__is_s3_receipt_handle(receipt_handle) and flush_s3:
             self.__delete_message_payload_from_s3(receipt_handle)
             receipt_handle = self.__get_orig_receipt_handle(receipt_handle)
         print("receipt_handle={}".format(receipt_handle))
