@@ -17,7 +17,7 @@ class EventBaseAws(EventBase):
                                 self.AWS_SECRET_ACCESS_KEY,
                                 self.AWS_DEFAULT_REGION,
                                 self.AWS_S3_QUEUE_STORAGE_NAME)
-        sns.send_message(
+        return sns.send_message(
             self.AWS_SNS_TOPIC,
             event_data,
             message_attributes={
