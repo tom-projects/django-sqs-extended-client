@@ -21,19 +21,28 @@ class Command(BaseCommand):
             '-s',
             '--sleep_poll_seconds',
             type=float,
-            default=0.01
+            default=0.2
         )
 
         parser.add_argument(
             '-e',
             '--exit_after_max_iterations_count',
             type=int,
-            default=10000
+            default=1000
+        )
+
+        parser.add_argument(
+            '-m',
+            '--max_number_of_messages',
+            type=int,
+            default=10,
+            choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         )
 
     def handle(self, *args, **options):
         queue_code = options['queue_code']
         sleep_poll_seconds = options['sleep_poll_seconds']
+        max_number_of_messages = options['max_number_of_messages']
         exit_after_max_iterations_count = options['exit_after_max_iterations_count']
         iterations = 0
 
@@ -58,7 +67,9 @@ class Command(BaseCommand):
             sns = SNSClientExtended(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY,
                                     settings.AWS_DEFAULT_REGION,
                                     settings.AWS_S3_QUEUE_STORAGE_NAME)
-            messages = sns.receive_message(queue_url, 1, 10)
+            messages = sns.receive_message(queue_url,
+                                           max_number_of_messages=max_number_of_messages,
+                                           wait_time_seconds=10)
             if messages is not None and len(messages) > 0:
                 for message in messages:
                     body = message.get('Body')
