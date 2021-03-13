@@ -163,7 +163,7 @@ class SNSClientExtended(object):
 
         return opt_messages
 
-    def __delete_message_payload_from_s3(self, receipt_handle):
+    def __delete_message_payload_from_s3(self, receipt_handle, flush_s3):
         try:
             s3_msg_bucket_name = self.__get_bucket_marker_from_receipt_handle(receipt_handle,
                                                                               SQSExtendedClientConstants.S3_BUCKET_NAME_MARKER.value)
@@ -173,8 +173,9 @@ class SNSClientExtended(object):
                               aws_secret_access_key=self.aws_secret_access_key, region_name=self.aws_region_name)
             s3 = session.resource('s3')
             s3_object = s3.Object(s3_msg_bucket_name, s3_msg_key)
-            s3_object.delete()
-            print('Deleted s3 object https://s3.amazonaws.com/{}/{}'.format(s3_msg_bucket_name, s3_msg_key))
+            if flush_s3:
+                s3_object.delete()
+                print('Deleted s3 object https://s3.amazonaws.com/{}/{}'.format(s3_msg_bucket_name, s3_msg_key))
         except Exception as e:
             print("Failed to delete the message content in S3 object. {}, type:{}".format(
                 str(e), type(e).__name__))
@@ -206,9 +207,9 @@ class SNSClientExtended(object):
 
         Additionally to purging the queue of the message any s3 referenced object will be deleted
         """
-        if self.__is_s3_receipt_handle(receipt_handle) and flush_s3:
-            self.__delete_message_payload_from_s3(receipt_handle)
-        receipt_handle = self.__get_orig_receipt_handle(receipt_handle)
+        if self.__is_s3_receipt_handle(receipt_handle):
+            self.__delete_message_payload_from_s3(receipt_handle, flush_s3)
+            receipt_handle = self.__get_orig_receipt_handle(receipt_handle)
         print("receipt_handle={}".format(receipt_handle))
         self.sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
