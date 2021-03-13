@@ -21,14 +21,14 @@ class Command(BaseCommand):
             '-s',
             '--sleep_poll_seconds',
             type=float,
-            default=0.2
+            default=0.01
         )
 
         parser.add_argument(
             '-e',
             '--exit_after_max_iterations_count',
             type=int,
-            default=200
+            default=10000
         )
 
     def handle(self, *args, **options):
