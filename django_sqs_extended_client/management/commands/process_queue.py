@@ -1,5 +1,5 @@
 from time import sleep
-
+from datetime import datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django_sqs_extended_client.aws.sns_client_extended import SNSClientExtended
@@ -19,16 +19,16 @@ class Command(BaseCommand):
 
         parser.add_argument(
             '-s',
-            '--sleep_poll_seconds',
+            '--default_sleep',
             type=float,
             default=0.2
         )
 
         parser.add_argument(
             '-e',
-            '--exit_after_max_iterations_count',
+            '--exit_after_seconds',
             type=int,
-            default=1000
+            default=100
         )
 
         parser.add_argument(
@@ -46,13 +46,14 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        start_dt = datetime.now()
+        
         queue_code = options['queue_code']
-        sleep_poll_seconds = options['sleep_poll_seconds']
+        default_sleep = options['default_sleep']
         max_number_of_messages = options['max_number_of_messages']
-        exit_after_max_iterations_count = options['exit_after_max_iterations_count']
+        exit_after_seconds = options['exit_after_seconds']
         flush_s3 = options.get('flush_s3', False)
-        iterations = 0
-
+        
         try:
             sqs_event = settings.SQS_EVENTS[queue_code]
         except KeyError:
@@ -66,11 +67,13 @@ class Command(BaseCommand):
         signal_handler = SignalHandler()
 
         while not self.get_received_signal(signal_handler=signal_handler):
-            iterations = iterations + 1
-            if iterations > exit_after_max_iterations_count:
-                print(f'Exiting after {exit_after_max_iterations_count} iterations.')
+            now = datetime.now()
+            seconds_after_start = (now - start_dt).seconds
+            if seconds_after_start > exit_after_seconds:
+                print(f'Exiting after {exit_after_seconds} seconds.')
                 return
 
+            sleep_time = default_sleep
             sns = SNSClientExtended(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY,
                                     settings.AWS_DEFAULT_REGION,
                                     settings.AWS_S3_QUEUE_STORAGE_NAME)
@@ -78,6 +81,7 @@ class Command(BaseCommand):
                                            max_number_of_messages=max_number_of_messages,
                                            wait_time_seconds=10)
             if messages is not None and len(messages) > 0:
+                sleep_time = 0.001
                 for message in messages:
                     body = message.get('Body')
                     content = body.get('Message')
@@ -85,7 +89,7 @@ class Command(BaseCommand):
                     self.process_event(queue_code=queue_code, content_data=content, attributes=attributes)
                     sns.delete_message(queue_url=queue_url, receipt_handle=message.get('ReceiptHandle'),
                                        flush_s3=flush_s3)
-            sleep(sleep_poll_seconds)
+            sleep(sleep_time)
 
     @staticmethod
     def get_received_signal(signal_handler: SignalHandler):

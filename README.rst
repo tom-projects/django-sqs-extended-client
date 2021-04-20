@@ -122,8 +122,8 @@ Use the same paths of the 'event_processor' in settings.SQS_EVENTS like this::
 
     class ImageCreated(EventProcessor):
 
-        def __init__(self, data):
-            super().__init__(data=data)
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
 
         def execute(self):
             # your code here

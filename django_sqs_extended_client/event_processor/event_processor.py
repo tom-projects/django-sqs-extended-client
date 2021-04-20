@@ -3,10 +3,10 @@ from abc import ABC, abstractmethod
 
 class EventProcessor(ABC):
 
-    def __init__(self, data, attributes, queue_code):
-        self.data = data
-        self.attributes = attributes
-        self.queue_code = queue_code
+    def __init__(self, **kwargs):
+        self.data = kwargs.get('data')
+        self.attributes = kwargs.get('attributes', {})
+        self.queue_code = kwargs.get('data')
 
     @abstractmethod
     def execute(self):
