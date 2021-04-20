@@ -149,6 +149,8 @@ class SNSClientExtended(object):
                     s3_key = message_body_inner.get('s3Key')
                     orig_msg_body = self.get_text_from_s3(s3_bucket_name, s3_key)
                     message['Body']['Message'] = orig_msg_body
+                    message['Body']['MessageAttributes']['s3_key'] = s3_key
+                    message['Body']['MessageAttributes']['s3_bucket_name'] = s3_bucket_name
                     # remove the additional attribute before returning the message to user.
                     message['Body'].get('MessageAttributes').pop(
                         SQSExtendedClientConstants.RESERVED_ATTRIBUTE_NAME.value)

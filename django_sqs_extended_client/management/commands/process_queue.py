@@ -107,4 +107,4 @@ class Command(BaseCommand):
         event_processor_class = pydoc.locate(event_processor_class_path)
         if event_processor_class is None:
             raise FileNotFoundError(f'File "{event_processor_class_path}" not found')
-        event_processor_class(data=data).execute()
+        event_processor_class(data=data, attributes=attributes, queue_code=queue_code).execute()
